@@ -1,12 +1,13 @@
 package proxy
 
 import (
-	"net"
 	"io"
-	"time"
 	"log"
-	"github.com/xsank/EasyProxy/src/proxy/schedule"
+	"net"
+	"time"
+
 	"github.com/xsank/EasyProxy/src/config"
+	"github.com/xsank/EasyProxy/src/proxy/schedule"
 	"github.com/xsank/EasyProxy/src/structure"
 )
 
@@ -20,6 +21,7 @@ type EasyProxy struct {
 }
 
 func (proxy *EasyProxy) Init(config *config.Config) {
+	InitUser()
 	proxy.data = new(ProxyData)
 	proxy.data.Init(config)
 	proxy.setStrategy(config.Strategy)
@@ -54,7 +56,7 @@ func (proxy *EasyProxy) Dispatch(con net.Conn) {
 	if proxy.isBackendAvailable() {
 		servers := proxy.data.BackendUrls()
 		url := proxy.strategy.Choose(con.RemoteAddr().String(), servers)
-		proxy.transfer(con, url)
+		proxy.transfer2(con, url)
 	} else {
 		con.Close()
 		log.Println("no backends available now,please check your server!")
@@ -79,7 +81,7 @@ func (proxy *EasyProxy) closeChannel(channel *structure.Channel, sync chan int) 
 }
 
 func (proxy *EasyProxy) transfer(local net.Conn, remote string) {
-	remoteConn, err := net.DialTimeout("tcp", remote, DefaultTimeoutTime * time.Second)
+	remoteConn, err := net.DialTimeout("tcp", remote, DefaultTimeoutTime*time.Second)
 	if err != nil {
 		local.Close()
 		proxy.Clean(remote)
@@ -87,7 +89,7 @@ func (proxy *EasyProxy) transfer(local net.Conn, remote string) {
 		return
 	}
 	sync := make(chan int, 1)
-	channel := structure.Channel{SrcConn:local, DstConn:remoteConn}
+	channel := structure.Channel{SrcConn: local, DstConn: remoteConn}
 	go proxy.putChannel(&channel)
 	go proxy.safeCopy(local, remoteConn, sync)
 	go proxy.safeCopy(remoteConn, local, sync)

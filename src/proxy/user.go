@@ -59,7 +59,7 @@ func parseUser(dat string) string {
 	if len(lines) > 2 {
 		if strings.Contains(lines[1], "Host") {
 			sl := strings.Split(lines[1], ":")
-			return strings.Split(strings.TrimSpace(sl[1]), ".")[0]
+			return strings.TrimSpace(sl[1])
 		}
 	}
 	return ""
@@ -129,5 +129,5 @@ func isValidUser(u string) bool {
 	if _, ok := Users[u]; !ok {
 		return false
 	}
-	return Users[u].Expired.Unix() > time.Now().Unix()
+	return (Users[u].Expired.Unix() > time.Now().Unix()) && Users[u].TrafficLeft > 0
 }
